@@ -12,18 +12,46 @@ int election(int current_process, int cluster){
     int new_leader;
     while(1){
         if(process_Rank == current_process){
+            message_Item = 456;
+            MPI_Send(&message_Item, 1, MPI_INT, elected_process, 1, MPI_COMM_WORLD);
+            printf("Message Sent: %d\n", message_Item);
+        }
+
+        else if(process_Rank == ){
+            MPI_Recv(&message_Item, 1, MPI_INT, current_process, 1, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+            printf("Message Received: %d\n", message_Item);
+        }
+        return new_leader;
+    }
+}
+*/
+
+/*  não entendi o cluster, se era algo dos processos maiores ou o que, vou ver com calma amanha nao to conseguindo pensar
+int new_election ( int vec_process[], current_process, int cluster) {
+    int new_leader;
+    while(1){
+        if(process_Rank == current_process){
         message_Item = 456;
         MPI_Send(&message_Item, 1, MPI_INT, elected_process, 1, MPI_COMM_WORLD);
         printf("Message Sent: %d\n", message_Item);
     }
-
     else if(process_Rank == ){
         MPI_Recv(&message_Item, 1, MPI_INT, current_process, 1, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
         printf("Message Received: %d\n", message_Item);
     }
-        return new_leader;
-    }
+    return new_leader;
 }
+
+
+/* O que o Gerson mandou no email
+
+int recv, flag;
+MPI_Request req;
+MPI_Irecv(&recv,1,MPI_INT,MPI_ANY_SOURCE,DATA,MPI_COMM,WORLD, &req);
+sleep(5); // aguarda 5 segundos
+MPI_Test(*req, &flag, status);
+if(flag == true) Então recebeu mensagem (lider acordado)
+else Não recebeu, lider falhou
 */
 
 //Função random
