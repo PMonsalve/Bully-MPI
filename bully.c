@@ -7,7 +7,7 @@
 sem modificar o current_process por que caso nenhum responda o lider e ele.
 Duvida, como que sei que respondeu a mensagem pra poder eleger o lider?
 */
-
+/*
 int election (int current_process, int cluster, int previous_leader, int* inativos){
     int aux = current_process;
     int array[cluster]; 
@@ -29,12 +29,12 @@ int election (int current_process, int cluster, int previous_leader, int* inativ
                     message_Item = 456;
                     MPI_Send(&message_Item, 1, MPI_INT, i, 1, MPI_COMM_WORLD);
                     printf("Messagens de eleição enviadas do processo %d\n",current_process);
-                    resposta=0;
-                    
-                    MPI_Recv(&message_Item, 1, MPI_INT, current_process, 1, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-                    printf("Messagem recebida, tem processos maiores\n");
-                    aux=j;
-                    current_process=i;
+                   // resposta=0;
+                    if ()
+                        MPI_Recv(&message_Item, 1, MPI_INT, current_process, 1, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+                        printf("Messagem recebida, tem processos maiores\n");
+                        aux=current_process;
+                        current_process=i;
                     //resposta=1;
                     
                     
@@ -63,7 +63,7 @@ int election (int current_process, int cluster, int previous_leader, int* inativ
     //}
     //return new_leader;
 }   
-
+*/
 
 
 //Função random
@@ -78,7 +78,8 @@ int main(int argc, char** argv){
     int n, result_random = 0, i, elected_process;
     int recv, flag, dormiu=0;
     int *inativos;
-    
+    int current_process;
+
     MPI_Init(&argc, &argv);
     MPI_Comm_size(MPI_COMM_WORLD, &size_Of_Cluster);
     MPI_Comm_rank(MPI_COMM_WORLD, &process_Rank);
@@ -97,6 +98,7 @@ int main(int argc, char** argv){
                 message_Item = 123;
                 MPI_Send(&message_Item, 1, MPI_INT, elected_process, 1, MPI_COMM_WORLD);
                 printf("Mensagem enviada de %d\n",process_Rank);
+                current_process = process_Rank;
             }else if(process_Rank == elected_process){
                 MPI_Status status;
                 MPI_Request req;
@@ -113,7 +115,26 @@ int main(int argc, char** argv){
                         printf("Lider dormiu.\n");
                         dormiu=1;
                         inativos[elected_process]=1;
-                        elected_process = election(0, size_Of_Cluster,elected_process,inativos);
+                        while (1){
+                            for(i=current_process+1; i<size_Of_Cluster; i++){
+                                if (i!=inativos[elected_process]){
+                                    message_Item = 456;
+                                    MPI_Send(&message_Item, 1, MPI_INT, i, 1, MPI_COMM_WORLD);
+                                    printf("Messagens de eleição enviadas do processo %d\n",current_process);
+                                    resposta=0;
+                                    if (process_Rank == i){
+                                        MPI_Recv(&message_Item, 1, MPI_INT, current_process, 1, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+                                        printf("Messagem recebida, tem processos maiores\n");
+                                        current_process=i;
+                                        resposta=1;
+                                    }            
+                                }                                            
+                            }
+                                
+                        }
+                        if(resposta==0)
+                            printf("Novo lider: %d\n",aux);
+                            return aux;   
                         //fazer o sleep e futuramente a eleição
                     }
                 }
