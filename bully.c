@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <unistd.h>
 #include <mpi.h>
 
 /*
@@ -46,39 +47,30 @@ int random_number (int max){
     return result;
 }
 
-void main(int argc, char** argv){
-    int process_Rank, size_Of_Cluster
-    int n, result_random = 0, i, *vector_process, elected_process;
+int main(int argc, char** argv){
+    int process_Rank, size_Of_Cluster, message_Item, DATA;
+    int n, result_random = 0, i, elected_process;
     int recv, flag;
+    MPI_Status *status;
 
     MPI_Init(&argc, &argv);
     MPI_Comm_size(MPI_COMM_WORLD, &size_Of_Cluster);
     MPI_Comm_rank(MPI_COMM_WORLD, &process_Rank);
 
-    printf("Entre com o número de processos\n");
-    scanf("%d", &n);
-
-    vector_process = malloc(n * sizeof(int));
-
-    //Define se o processo está ativo(1) ou dormindo (0)  
-    for (i = 0; i < n; i++){
-        vector_process[i] = 0;
-    }
-    elected_process = i;
-    vector_process[elected_process] = 1;
-
+    elected_process = size_Of_Cluster -1;
+    
     while(1){
             
         if(process_Rank != elected_process){
         message_Item = 123;
         MPI_Send(&message_Item, 1, MPI_INT, elected_process, 1, MPI_COMM_WORLD);
-        printf("Mensagem enviada de %d\n",&process_Rank);
+        printf("Mensagem enviada de %d\n",process_Rank);
         }else if(process_Rank == elected_process){
             MPI_Request req;
-            MPI_Irecv(&recv,1,MPI_INT,MPI_ANY_SOURCE,DATA,MPI_COMM,WORLD, &req);
+            MPI_Irecv(&recv,1,MPI_INT,MPI_ANY_SOURCE,DATA,MPI_COMM_WORLD, &req);
             sleep(5);
             MPI_Test(*req, &flag, status);
-            if(flag == true){
+            if(flag == 1){
                 printf("Lider recebeu a mensagem.\n");
                 if(random_number(1))
                     printf("Lider segue ativo.\n");
