@@ -27,21 +27,6 @@ int election(int current_process, int cluster){
 */
 
 /*  não entendi o cluster, se era algo dos processos maiores ou o que, vou ver com calma amanha nao to conseguindo pensar
-int new_election ( int vec_process[], current_process, int cluster) {
-    int new_leader;
-    while(1){
-        if(process_Rank == current_process){
-        message_Item = 456;
-        MPI_Send(&message_Item, 1, MPI_INT, elected_process, 1, MPI_COMM_WORLD);
-        printf("Message Sent: %d\n", message_Item);
-    }
-    else if(process_Rank == ){
-        MPI_Recv(&message_Item, 1, MPI_INT, current_process, 1, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-        printf("Message Received: %d\n", message_Item);
-    }
-    return new_leader;
-}
-
 
 /* O que o Gerson mandou no email
 
@@ -63,8 +48,9 @@ int random_number (int max){
 
 void main(int argc, char** argv){
     int process_Rank, size_Of_Cluster
-    int n, result_random = 0, i, *vector_process, elected_process, isRecieved;
-    
+    int n, result_random = 0, i, *vector_process, elected_process;
+    int recv, flag;
+
     MPI_Init(&argc, &argv);
     MPI_Comm_size(MPI_COMM_WORLD, &size_Of_Cluster);
     MPI_Comm_rank(MPI_COMM_WORLD, &process_Rank);
@@ -82,31 +68,47 @@ void main(int argc, char** argv){
     vector_process[elected_process] = 1;
 
     while(1){
-        for(i = 0; i < elected_process; i++){
-            printf("Enviando mensagem de %d\n", i);
-            //Determina se o processo líder recebeu mensagem ou não
-            isRecieved = random_number(2);
-            if (isRecieved == 0){
-                vector_process[elected_process] = 0;
-                elected_process = elected_process -1;
-                printf("Líder dormiu, o novo processo líder é: %d\n", elected_process);
-                vector_process[elected_process] = 1;
-                //elected_process= election(&process_Rank,&size_Of_Cluster); chamada da função da eleição com o processo atual e o grupo de processos
-                i = -1;
-            }else{
-                printf("Líder recebeu a mensagem\n");
+            
+        if(process_Rank != elected_process){
+        message_Item = 123;
+        MPI_Send(&message_Item, 1, MPI_INT, elected_process, 1, MPI_COMM_WORLD);
+        printf("Mensagem enviada de %d\n",&process_Rank);
+        }else if(process_Rank == elected_process){
+            MPI_Request req;
+            MPI_Irecv(&recv,1,MPI_INT,MPI_ANY_SOURCE,DATA,MPI_COMM,WORLD, &req);
+            sleep(5);
+            MPI_Test(*req, &flag, status);
+            if(flag == true){
+                printf("Lider recebeu a mensagem.\n");
+                if(random_number(1))
+                    printf("Lider segue ativo.\n");
+                else{
+                    printf("Lider dormiu.\n");
+                }
             }
         }
+            //elected_process= election(&process_Rank,&size_Of_Cluster); chamada da função da eleição com o processo atual e o grupo de processos
     }
     MPI_Finalize();
     return 0;
 }
+
 /* PROTOTIPO DE ENVIO DE MESAGENS ENTRE PROCESSOS NORMAIS E LIDERES
 if(process_Rank != elected_process){
         message_Item = 123;
         MPI_Send(&message_Item, 1, MPI_INT, elected_process, 1, MPI_COMM_WORLD);
-        printf("Message Sent: %d\n", message_Item);
+        printf("Mensagem enviada: %d\n", message_Item);
     }
+
+
+int recv, flag;
+MPI_Request req;
+MPI_Irecv(&recv,1,MPI_INT,MPI_ANY_SOURCE,DATA,MPI_COMM,WORLD, &req);
+sleep(5); // aguarda 5 segundos
+MPI_Test(*req, &flag, status);
+if(flag == true) Então recebeu mensagem (lider acordado)
+else Não recebeu, lider falhou
+
 
     else if(process_Rank == elected_process){
 *///        MPI_Recv(&message_Item, 1, MPI_INT, /*de quem recebeu a msg, colocar variavel no lugar do 0*/0, 1, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
