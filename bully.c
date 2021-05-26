@@ -8,7 +8,7 @@ sem modificar o current_process por que caso nenhum responda o lider e ele.
 Duvida, como que sei que respondeu a mensagem pra poder eleger o lider?
 */
 
-int election (int current_process, int cluster, int previous_leader){
+int election (int current_process, int cluster, int previous_leader, int* inativos){
     int aux = current_process;
     int array[cluster]; 
     int i = 0, message_Item, j;
@@ -16,30 +16,38 @@ int election (int current_process, int cluster, int previous_leader){
     int resposta;
 
     printf("\nInicio da eleição.\n");
-    while (i < cluster){
-        array [i] = i;
-        i++;
-    }
+    //while (i < cluster){
+    //    array [i] = i;
+    //    i++;
+    //}
     
     while (1){
-        for (j=current_process; j<cluster; j++){ // pra testar sempre do processo atual ate o cluster, 
+        //for (j=current_process; j<cluster; j++){ // pra testar sempre do processo atual ate o cluster, 
         //quando muda nao o processo atual que ta enviando as mensagens o for muda tb pra nao repetir testes com anteriores
-            if(j=current_process){
+            //if(j==current_process){
                 for(i=current_process+1; i<cluster; i++){
                     message_Item = 456;
                     MPI_Send(&message_Item, 1, MPI_INT, i, 1, MPI_COMM_WORLD);
-                }
-                printf("Messagens de eleição enviadas do processo %d\n",current_process);
-                resposta =0;
-            }
-            if((j>current_process) && (j!=previous_leader)){
+                    printf("Messagens de eleição enviadas do processo %d\n",current_process);
+                    resposta=0;
+                    
                     MPI_Recv(&message_Item, 1, MPI_INT, current_process, 1, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
                     printf("Messagem recebida, tem processos maiores\n");
+                    aux=j;
+                    current_process=i;
+                    //resposta=1;
+                    
+                    
+                }
+            //}
+            //if((j>current_process) && (j!=previous_leader)){
+            //        MPI_Recv(&message_Item, 1, MPI_INT, current_process, 1, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+            //        printf("Messagem recebida, tem processos maiores\n");
                     //new_leader = array[j]; // acredito que possa funcionar, atualiza sempre que recebe uma mensagem
                     //current_process = array[j]; // muda o processo atual
-                    resposta=1;
-                    aux=j;
-            }
+            //        resposta=1;
+            //        aux=j;
+            //}
         }
         if(resposta==0)
             printf("Novo lider: %d\n",aux);
@@ -52,7 +60,7 @@ int election (int current_process, int cluster, int previous_leader){
         //    return new_leader;
         //else // se nao aconteceu nenhum caso anterior ele atualiza o processo atual com o new_leader e tenta enviar as mensagens a partir dele
         //    current_process = new_leader;
-    }
+    //}
     //return new_leader;
 }   
 
@@ -69,10 +77,16 @@ int main(int argc, char** argv){
     int process_Rank, size_Of_Cluster, message_Item, DATA;
     int n, result_random = 0, i, elected_process;
     int recv, flag, dormiu=0;
+    int *inativos;
     
     MPI_Init(&argc, &argv);
     MPI_Comm_size(MPI_COMM_WORLD, &size_Of_Cluster);
     MPI_Comm_rank(MPI_COMM_WORLD, &process_Rank);
+
+    inativos = malloc(size_Of_Cluster * sizeof(int));
+    for(i=0;i<size_Of_Cluster;i++){
+        inativos[i]=0;
+    }
 
     elected_process = size_Of_Cluster -1;
     
@@ -98,7 +112,8 @@ int main(int argc, char** argv){
                     else{
                         printf("Lider dormiu.\n");
                         dormiu=1;
-                        elected_process = election(0, size_Of_Cluster,elected_process);
+                        inativos[elected_process]=1;
+                        elected_process = election(0, size_Of_Cluster,elected_process,inativos);
                         //fazer o sleep e futuramente a eleição
                     }
                 }
