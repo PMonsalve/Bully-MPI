@@ -3,6 +3,41 @@
 #include <unistd.h>
 #include <mpi.h>
 
+/* o que pensei aqui ele faz um vetor com os maiores, salva o numero e usa pra mandar a mensagem 
+sem modificar o current_process por que caso nenhum responda o lider e ele.
+Duvida, como que sei que respondeu a mensagem pra poder eleger o lider?
+*/
+
+int election (int current_process, int cluster){
+    int aux = current_process + 1;
+    int array[cluster]; 
+    int i = 0;
+    int j, new_leader;
+
+    while (aux <= cluster){
+        array [i] = aux;
+        aux++;
+        i++;
+    }
+
+    for (j=0; j<i; j++){
+        if(process_Rank == current_process){
+            message_Item = 456;
+            MPI_Send(&message_Item, 1, MPI_INT, array[j], 1, MPI_COMM_WORLD);
+            printf("Message Sent: %d\n", message_Item);
+        }
+
+        else if(process_Rank == array[j]){
+            MPI_Recv(&message_Item, 1, MPI_INT, current_process, 1, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+            printf("Message Received: %d\n", message_Item);
+            new_leader = array[j]; // acredito que possa funcionar
+        }
+    }
+    new_leader = current_process;
+
+    return new_leader;
+}   
+
 /*
 int greater(int current_process, int cluster){
     //função para definir os processos maiores, por exemplo os processos 5, 6 e 7 são processos maiores que 4
@@ -60,12 +95,13 @@ int main(int argc, char** argv){
     elected_process = size_Of_Cluster -1;
     
     while(1){
+        // duvida : por que é <=size_Of_Cluster e não < ? isso interfere na minha definição lá kkk talvez, pode ser que precise decrementar um se for menor
     for(i=0;i<=size_Of_Cluster;i++){      
         if(process_Rank != elected_process){
-        message_Item = 123;
-        MPI_Send(&message_Item, 1, MPI_INT, elected_process, 1, MPI_COMM_WORLD);
-        printf("Mensagem enviada de %d\n",process_Rank);
-        enviando=process_Rank;
+            message_Item = 123;
+            MPI_Send(&message_Item, 1, MPI_INT, elected_process, 1, MPI_COMM_WORLD);
+            printf("Mensagem enviada de %d\n",process_Rank);
+            enviando=process_Rank;
         }else if(process_Rank == elected_process){
             MPI_Status status;
             MPI_Request req;
@@ -86,11 +122,14 @@ int main(int argc, char** argv){
         }
         MPI_Barrier(MPI_COMM_WORLD);
     }
+            elected_process = election (process_Rank, size_Of_Cluster); 
             //elected_process= election(&process_Rank,&size_Of_Cluster); chamada da função da eleição com o processo atual e o grupo de processos
     }
     MPI_Finalize();
     return 0;
 }
+
+
 
 /* PROTOTIPO DE ENVIO DE MESAGENS ENTRE PROCESSOS NORMAIS E LIDERES
 if(process_Rank != elected_process){
@@ -114,4 +153,3 @@ else Não recebeu, lider falhou
 /*        printf("Message Received: %d\n", message_Item);
     }
 */
-
