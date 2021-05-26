@@ -12,7 +12,7 @@ int election (int current_process, int cluster){
     int aux = current_process + 1;
     int array[cluster]; 
     int i = 0;
-    int j, new_leader;
+    int j, new_leader = current_process;
 
     while (aux <= cluster){
         array [i] = aux;
@@ -20,21 +20,31 @@ int election (int current_process, int cluster){
         i++;
     }
 
-    for (j=0; j<i; j++){
-        if(process_Rank == current_process){
-            message_Item = 456;
-            MPI_Send(&message_Item, 1, MPI_INT, array[j], 1, MPI_COMM_WORLD);
-            printf("Message Sent: %d\n", message_Item);
-        }
+    while (1){
+        for (j=current_process; j<=cluster; j++){ // pra testar sempre do processo atual ate o cluster, 
+        //quando muda nao o processo atual que ta enviando as mensagens o for muda tb pra nao repetir testes com anteriores
+            if(process_Rank == current_process){
+                message_Item = 456;
+                MPI_Send(&message_Item, 1, MPI_INT, array[j], 1, MPI_COMM_WORLD);
+                printf("Message Sent: %d\n", message_Item);
+            }
 
-        else if(process_Rank == array[j]){
-            MPI_Recv(&message_Item, 1, MPI_INT, current_process, 1, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-            printf("Message Received: %d\n", message_Item);
-            new_leader = array[j]; // acredito que possa funcionar
+            else if(process_Rank == array[j]){
+                MPI_Recv(&message_Item, 1, MPI_INT, current_process, 1, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+                printf("Message Received: %d\n", message_Item);
+                new_leader = array[j]; // acredito que possa funcionar, atualiza sempre que recebe uma mensagem
+                current_process = array[j]; // muda o processo atual
+            }
         }
+        if (current_aux == current_process) // se o anterior e igual ao processo atua quer dizer que ninguem respondeu retorna o new_leader
+        // salvo por ultimo 
+            return new_leader;
+        if (current_process == cluster) // aqui e um teste pra saber se o maior respondeu, ele enviou mensagem pra todos e o atual 
+        //e o cluster, no caso o maior
+            return new_leader;
+        else // se nao aconteceu nenhum caso anterior ele atualiza o processo atual com o new_leader e tenta enviar as mensagens a partir dele
+            current_process = new_leader;
     }
-    new_leader = current_process;
-
     return new_leader;
 }   
 
