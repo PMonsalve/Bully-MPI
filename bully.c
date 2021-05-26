@@ -78,7 +78,7 @@ int main(int argc, char** argv){
     int n, result_random = 0, i, elected_process;
     int recv, flag, dormiu=0;
     int *inativos;
-    int current_process;
+    int current_process, j, aux, resposta;
 
     MPI_Init(&argc, &argv);
     MPI_Comm_size(MPI_COMM_WORLD, &size_Of_Cluster);
@@ -116,16 +116,17 @@ int main(int argc, char** argv){
                         dormiu=1;
                         inativos[elected_process]=1;
                         while (1){
-                            for(i=current_process+1; i<size_Of_Cluster; i++){
-                                if (i!=inativos[elected_process]){
+                            for(j=current_process+1; j<size_Of_Cluster; j++){
+                                if (j!=inativos[elected_process]){
                                     message_Item = 456;
-                                    MPI_Send(&message_Item, 1, MPI_INT, i, 1, MPI_COMM_WORLD);
+                                    MPI_Send(&message_Item, 1, MPI_INT, j, 1, MPI_COMM_WORLD);
                                     printf("Messagens de eleição enviadas do processo %d\n",current_process);
                                     resposta=0;
-                                    if (process_Rank == i){
+                                    aux = current_process;
+                                    if (process_Rank == j){
                                         MPI_Recv(&message_Item, 1, MPI_INT, current_process, 1, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
                                         printf("Messagem recebida, tem processos maiores\n");
-                                        current_process=i;
+                                        current_process = j;
                                         resposta=1;
                                     }            
                                 }                                            
