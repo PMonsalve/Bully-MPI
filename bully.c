@@ -79,6 +79,7 @@ int main(int argc, char** argv){
     int recv, flag, dormiu=0;
     int *inativos;
     int current_process, j, aux, resposta;
+    double start,end,total;
 
     MPI_Init(&argc, &argv);
     MPI_Comm_size(MPI_COMM_WORLD, &size_Of_Cluster);
@@ -88,7 +89,7 @@ int main(int argc, char** argv){
     for(i=0;i<size_Of_Cluster;i++){
         inativos[i]=0;
     }
-
+    current_process=0;
     elected_process = size_Of_Cluster -1;
     
     while(1){
@@ -96,6 +97,7 @@ int main(int argc, char** argv){
         for(i=0;i<size_Of_Cluster;i++){      
             if(process_Rank != elected_process){
                 message_Item = 123;
+                start=MPI_Wtime();
                 MPI_Send(&message_Item, 1, MPI_INT, elected_process, 1, MPI_COMM_WORLD);
                 printf("Mensagem enviada de %d\n",process_Rank);
                 current_process = process_Rank;
@@ -104,7 +106,7 @@ int main(int argc, char** argv){
                 MPI_Request req;
                 //MPI_Irecv(&recv,1,MPI_INT,MPI_ANY_SOURCE,DATA,MPI_COMM_WORLD, &req);
                 MPI_Recv(&recv, 1, MPI_INT, MPI_ANY_SOURCE, MPI_ANY_TAG, MPI_COMM_WORLD, &status);
-                sleep(5);
+                sleep(1);
                 //MPI_Test(&req, &flag, &status);
                 //printf("Lider recebeu a mensagem. %d\n",status.MPI_SOURCE);
                 if(flag){
@@ -117,7 +119,7 @@ int main(int argc, char** argv){
                         inativos[elected_process]=1;
                         while (1){
                             for(j=current_process+1; j<size_Of_Cluster; j++){
-                                if (j!=inativos[elected_process]){
+                                if (j!=elected_process){
                                     message_Item = 456;
                                     MPI_Send(&message_Item, 1, MPI_INT, j, 1, MPI_COMM_WORLD);
                                     printf("Messagens de eleição enviadas do processo %d\n",current_process);
@@ -145,7 +147,9 @@ int main(int argc, char** argv){
             //    dormiu=0;
             //}
             MPI_Barrier(MPI_COMM_WORLD);
-        }     
+        }    
+        end = MPI_Wtime();
+        printf("\nTempo decorrido: %f.3\n", end-start); 
     }
     MPI_Finalize();
     return 0;
