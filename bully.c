@@ -107,7 +107,7 @@ int main(int argc, char** argv){
                 //MPI_Irecv(&recv,1,MPI_INT,MPI_ANY_SOURCE,DATA,MPI_COMM_WORLD, &req);
                 MPI_Recv(&recv, 1, MPI_INT, MPI_ANY_SOURCE, MPI_ANY_TAG, MPI_COMM_WORLD, &status);
                 sleep(1);
-                //MPI_Test(&req, &flag, &status);
+
                 //printf("Lider recebeu a mensagem. %d\n",status.MPI_SOURCE);
                 if(flag){
                     printf("Lider recebeu a mensagem do processador %d.\n",status.MPI_SOURCE);
@@ -122,10 +122,12 @@ int main(int argc, char** argv){
                                 if (j!=elected_process){
                                     message_Item = 456;
                                     MPI_Send(&message_Item, 1, MPI_INT, j, 1, MPI_COMM_WORLD);
+                                    MPI_Test(&req, &flag, &status);
                                     printf("Messagens de eleição enviadas do processo %d\n",current_process);
                                     resposta=0;
                                     aux = current_process;
-                                    if (process_Rank == j){
+
+                                    if (flag){
                                         MPI_Recv(&message_Item, 1, MPI_INT, current_process, 1, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
                                         printf("Messagem recebida, tem processos maiores\n");
                                         current_process = j;
