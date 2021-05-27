@@ -26,27 +26,33 @@ int main(int argc, char** argv){
     MPI_Status status;
     MPI_Request req;
     inativos = malloc(size_Of_Cluster * sizeof(int));
+
+    //Buffer de processos inativos
     for(i=0;i<size_Of_Cluster;i++){
         inativos[i]=i;
     }
     current_process=0;
     elected_process = size_Of_Cluster -1;
     while(1){
-        for(i=0;i<size_Of_Cluster;i++){  
+        //Envia mensagem dos processos para o líder
+        for(i=0;i<size_Of_Cluster;i++){ 
+     
             if(current_process != elected_process){
                 message_Item = 123;
                 start=MPI_Wtime();
-                MPI_Irecv(&message_Item,size_Of_Cluster,MPI_INT,MPI_ANY_SOURCE,DATA,MPI_COMM_WORLD, &req);
-                MPI_Send(&message_Item, size_Of_Cluster, MPI_INT, elected_process, 1, MPI_COMM_WORLD);
-                sleep(3);
-                MPI_Test(&req, &flag, &status);
+           //     MPI_Irecv(&inativos,size_Of_Cluster,MPI_INT,MPI_ANY_SOURCE,DATA,MPI_COMM_WORLD, &req);
+                MPI_Send(&inativos, size_Of_Cluster, MPI_INT, elected_process, 1, MPI_COMM_WORLD);
+                sleep(1);
+     //           MPI_Test(&req, &flag, &status);
                 printf("Mensagem enviada de %d\n",process_Rank);
                 current_process = process_Rank;              
-
             }
-            if(flag){
-                    MPI_Recv(&recv, size_Of_Cluster, MPI_INT, MPI_ANY_SOURCE, MPI_ANY_TAG, MPI_COMM_WORLD, &status);
-                    printf("Lider recebeu a mensagem do processador %d.\n",status.MPI_SOURCE);
+            //Teste se o líder recebeu a mensagem
+            if(process_Rank == elected_process){
+                
+                MPI_Recv(&recv, size_Of_Cluster, MPI_INT, MPI_ANY_SOURCE, MPI_ANY_TAG, MPI_COMM_WORLD, &status);
+                printf("Lider recebeu a mensagem do processador %d.\n",status.MPI_SOURCE);
+            //Nova Eleição
             }else{
                 printf("Lider dormiu.\n");
                 dormiu=1;
@@ -56,12 +62,11 @@ int main(int argc, char** argv){
                         if (j!=elected_process){
                             message_Item = 456;
                             MPI_Send(&message_Item, 1, MPI_INT, j, 1, MPI_COMM_WORLD);
-                            MPI_Test(&req, &flag2, &status);
+      //                      MPI_Test(&req, &flag2, &status);
                             printf("Messagens de eleição enviadas do processo %d\n",current_process);
                             resposta=0;
                             aux = current_process;
-                            printf("FLag2: %d\n", flag2);
-                            if (flag2){
+                            if (process_Rank == j){
                                 MPI_Recv(&message_Item, 1, MPI_INT, current_process, 1, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
                                 printf("Messagem recebida, tem processos maiores\n");
                                 current_process = j;
@@ -69,14 +74,17 @@ int main(int argc, char** argv){
                             }            
                         }                                            
                     }
+                    //Líder Definido
                     if(resposta==0)
                         printf("Novo lider: %d\n",aux);
                     elected_process = aux;  
                     break;
                 }
             }
+            //Auxilia a sincronização dos processos
             MPI_Barrier(MPI_COMM_WORLD);
-        }    
+        }   
+        //Tempo de execução do processo 
         end = MPI_Wtime();
         printf("\nTempo decorrido: %f.3\n", end-start); 
     }
